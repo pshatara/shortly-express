@@ -4,8 +4,6 @@ var partials = require('express-partials');
 var bodyParser = require('body-parser');
 var cookieParser = require('cookie-parser');
 var expressSession = require('express-session');
-var morgan = require('morgan');
-
 
 var db = require('./app/config');
 var Users = require('./app/collections/users');
@@ -25,7 +23,6 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(__dirname + '/public'));
 
-app.use(morgan('dev'));
 app.use(cookieParser());
 app.use(expressSession({
   secret: 'secret'
@@ -65,6 +62,12 @@ function(req, res) {
 app.get('/signup',
 function(req, res) {
   res.render('signup');
+});
+
+app.get('/logout',
+function(req, res) {
+  req.session.destroy();
+  res.render('login');
 });
 
 app.post('/links',
@@ -149,17 +152,6 @@ function(req, res) {
   })
 })
 
-// var authenticate = function(name, password, cb) {
-//   var user = db.users[name];
-//   if (!user) {
-//     return cb(new Error('Cannot Find User'));
-//   }
-
-//   if (name && password) {
-//     req.session.user = db.user;
-//     req.session.success;
-//   }
-// };
 
 /************************************************************/
 // Handle the wildcard route last - if all other routes fail
