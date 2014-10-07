@@ -31,7 +31,7 @@ app.use(expressSession({
   secret: 'secret'
 }));
 
-var checkUser = function restrict(req, res, next) {
+var checkUser = function (req, res, next) {
   if (req.session.user) {
     next();
   } else {
@@ -55,6 +55,16 @@ function(req, res) {
   Links.reset().fetch().then(function(links) {
     res.send(200, links.models);
   });
+});
+
+app.get('/login',
+function(req, res) {
+  res.render('login');
+});
+
+app.get('/signup',
+function(req, res) {
+  res.render('signup');
 });
 
 app.post('/links',
@@ -94,25 +104,59 @@ function(req, res) {
 /************************************************************/
 // Write your authentication routes here
 /************************************************************/
-app.get('/login',
+
+app.post('/signup',
 function(req, res) {
-  res.render('login');
+  var username = req.body.username;
+  var password = req.body.password;
+
+  new User({username: username, password: password}).fetch().then(function(found) {
+    if (found) {
+      console.log('The username', username, 'has already been taken.')
+    } else {
+
+      var user = new User({
+        username: username,
+        password: password
+      });
+      user.save().then(function(newUser) {
+        Users.add(newUser);
+        res.send(200, newUser);
+      });
+
+      req.session.regenerate(function() {
+          req.session.user = username;
+          res.redirect('/');
+      })
+    }
+  });
 });
 
-var authenticate = function(name, password, cb) {
-  var user = users[name];
-  if (!user) {
-    return cb(new Error('Cannot Find User'));
-  }
+// var authenticate = function(name, password, cb) {
+//   var user = db.users[name];
+//   if (!user) {
+//     return cb(new Error('Cannot Find User'));
+//   }
 
-  if (true) {  // user === name
-    req.session.user = user;
-    req.session.success;
-  }
-};
+//   if (name && password) {
+//     req.session.user = db.user;
+//     req.session.success;
+//   }
+// };
 
-app.post('/login', function(req, res) {
-  authenticate()
+app.post('/login',
+function(req, res) {
+  var username = req.body.username;
+  var password = req.body.password;
+
+  if (username === 'Phillip' && password === 'Phillip') {
+    req.session.regenerate(function() {
+        req.session.user = username;
+        res.redirect('/');
+    })
+  } else {
+    res.redirect('/login')
+  }
 })
 /************************************************************/
 // Handle the wildcard route last - if all other routes fail
