@@ -132,6 +132,23 @@ function(req, res) {
   });
 });
 
+app.post('/login',
+function(req, res) {
+  var username = req.body.username;
+  var password = req.body.password;
+
+  new User({username: username, password: password}).fetch().then(function(found) {
+    if (found) {
+      req.session.regenerate(function() {
+          req.session.user = username;
+          res.redirect('/');
+      })
+    } else {
+      res.redirect('/login')
+    }
+  })
+})
+
 // var authenticate = function(name, password, cb) {
 //   var user = db.users[name];
 //   if (!user) {
@@ -144,20 +161,6 @@ function(req, res) {
 //   }
 // };
 
-app.post('/login',
-function(req, res) {
-  var username = req.body.username;
-  var password = req.body.password;
-
-  if (username === 'Phillip' && password === 'Phillip') {
-    req.session.regenerate(function() {
-        req.session.user = username;
-        res.redirect('/');
-    })
-  } else {
-    res.redirect('/login')
-  }
-})
 /************************************************************/
 // Handle the wildcard route last - if all other routes fail
 // assume the route is a short code and try and handle it here.
