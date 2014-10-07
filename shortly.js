@@ -66,8 +66,9 @@ function(req, res) {
 
 app.get('/logout',
 function(req, res) {
-  req.session.destroy();
-  res.render('login');
+  req.session.destroy(function() {
+    res.redirect('/login');
+  });
 });
 
 app.post('/links',
