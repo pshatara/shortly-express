@@ -28,26 +28,18 @@ app.use(expressSession({
   secret: 'secret'
 }));
 
-var checkUser = function (req, res, next) {
-  if (req.session.user) {
-    next();
-  } else {
-    req.session.error = 'Access denied!';
-    res.redirect('/login');
-  }
-}
 
-app.get('/', checkUser,
+app.get('/', util.checkUser,
 function(req, res) {
   res.render('index');
 });
 
-app.get('/create', checkUser,
+app.get('/create', util.checkUser,
 function(req, res) {
   res.render('index');
 });
 
-app.get('/links', checkUser,
+app.get('/links', util.checkUser,
 function(req, res) {
   Links.reset().fetch().then(function(links) {
     res.send(200, links.models);
@@ -114,7 +106,9 @@ function(req, res) {
   var username = req.body.username;
   var password = req.body.password;
 
-  new User({username: username, password: password}).fetch().then(function(found) {
+  //CREATE PROMISE SO THAT PASSWORD IS HASHED BEFORE THE REST OF THE FUNCTION IS CALLED
+
+  new User({username: username}).fetch().then(function(found) {
     if (found) {
       console.log('The username', username, 'has already been taken.')
     } else {
@@ -128,10 +122,7 @@ function(req, res) {
         res.send(200, newUser);
       });
 
-      req.session.regenerate(function() {
-          req.session.user = username;
-          res.redirect('/');
-      })
+      util.startSession(req, res, username);
     }
   });
 });
@@ -141,17 +132,20 @@ function(req, res) {
   var username = req.body.username;
   var password = req.body.password;
 
-  new User({username: username, password: password}).fetch().then(function(found) {
-    if (found) {
-      req.session.regenerate(function() {
-          req.session.user = username;
-          res.redirect('/');
-      })
+  new User({username: username}).fetch().then(function(user) {
+    if (!user) {
+      res.redirect('/login');
     } else {
-      res.redirect('/login')
+      if (user.comparePassword(password, function(match) {
+        if (match) {
+          util.startSession(req, res, user);
+        } else {
+          res.redirect('/login');
+        }
+      }));
     }
-  })
-})
+  });
+});
 
 
 /************************************************************/
